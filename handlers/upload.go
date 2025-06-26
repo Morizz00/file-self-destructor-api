@@ -9,22 +9,34 @@ import (
 	"github.com/Morizz00/self-destruct-share-api/utils"
 )
 
+type StoredFile struct {
+	FileName      string `json:"filename"`
+	MIME          string `json:"mime"`
+	Data          []byte `json:"date"`
+	Password      string `json:"password"`
+	DownloadsLeft int    `json:"downloads left"`
+}
+
 func Upload(w http.ResponseWriter, r *http.Request) {
-	file, _, err := r.FormFile("file")
+	file, fileHeader, err := r.FormFile("file")
 	if err != nil {
 		http.Error(w, "Upload fail", http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
-
-	data, err := io.ReadAll(file)
+	fileData, err := io.ReadAll(file)
 	if err != nil {
-		http.Error(w, "storage failed", http.StatusInternalServerError)
+		http.Error(w, "Failed to read ts shi", http.StatusInternalServerError)
 		return
 	}
 
+	storeIt := storage.StoredFile{
+		FileName: fileHeader.Filename,
+		MIME:     fileHeader.Header.Get("Content-Type"),
+		Data:     fileData,
+	}
 	id := utils.GenerateID()
-	err = storage.StoreFile(id, data)
+	err = storage.StoreFile(id, storage.StoredFile(storeIt))
 	if err != nil {
 		http.Error(w, "storage error", http.StatusInternalServerError)
 		return
