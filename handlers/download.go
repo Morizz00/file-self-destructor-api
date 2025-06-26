@@ -9,11 +9,14 @@ import (
 
 func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	data, err := storage.GetAndDelete(id)
+	storedData, err := storage.GetAndDelete(id)
 	if err != nil {
 		http.Error(w, "file expired or not foundszies", http.StatusNotFound)
 		return
 	}
-	w.Header().Set("Content-Disposition", "attachment; filename="+id)
-	w.Write(data)
+	fileData := storedData.Data
+	w.Header().Set("Content-Disposition", "attachment; filename="+storedData.FileName)
+	w.Header().Set("Content-Type", storedData.MIME)
+	w.Write(fileData)
+
 }
