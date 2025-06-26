@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -17,11 +18,20 @@ func init() {
 	})
 }
 
-func StoreFile(key string, data []byte) error {
-	return rdb.Set(ctx, key, data, time.Minute*5).Err()
+func StoreFile(key string, file StoredFile) error {
+	u, err := json.Marshal(file)
+	if err != nil {
+		return err
+	}
+	return rdb.Set(ctx, key, u, time.Minute*5).Err()
 }
 
-func GetAndDelete(key string) ([]byte, error) {
+func GetAndDelete(key string) (StoredFile, error) {
 	val, err := rdb.GetDel(ctx, key).Bytes()
-	return val, err
+	if err != nil {
+		return StoredFile{}, err
+	}
+	var res StoredFile
+	err = json.Unmarshal(val, &res)
+	return res, err
 }
