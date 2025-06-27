@@ -15,6 +15,11 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fileData := storedData.Data
+	password := r.URL.Query().Get("password")
+	if storedData.Password != "" && storedData.Password != password {
+		http.Error(w, "wrong or missing password lil bud", http.StatusForbidden)
+		return
+	}
 	w.Header().Set("Content-Disposition", "attachment; filename="+storedData.FileName)
 	w.Header().Set("Content-Type", storedData.MIME)
 	w.Write(fileData)
