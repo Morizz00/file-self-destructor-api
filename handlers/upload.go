@@ -23,6 +23,8 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Upload fail", http.StatusBadRequest)
 		return
 	}
+	password := r.FormValue("password")
+
 	defer file.Close()
 	fileData, err := io.ReadAll(file)
 	if err != nil {
@@ -34,6 +36,7 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 		FileName: fileHeader.Filename,
 		MIME:     fileHeader.Header.Get("Content-Type"),
 		Data:     fileData,
+		Password: password,
 	}
 	id := utils.GenerateID()
 	err = storage.StoreFile(id, storage.StoredFile(storeIt))
@@ -44,3 +47,4 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 	dowloadURL := fmt.Sprintf("/file/%s", id)
 	fmt.Fprintf(w, "File uploaded--Download:/file/%s\n", dowloadURL)
 }
+
