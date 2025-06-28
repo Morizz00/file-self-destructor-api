@@ -12,11 +12,11 @@ Perfect for sharing secrets, cursed contracts, or sensitive memes.
 
 🔥 Upload files via REST
 
-💥 Auto-deletes after 1 download or 5 minutes, whichever comes first
+💥 Auto-deletes after the number of  downloads you set or 5 minutes, whichever comes first
 
 ⚡ Powered by Redis for in-memory speed and TTL-based cleanup
 
-📬 Returns a one-time-use download link
+📬 Also returns a one-time-use download link
 
 
 
@@ -76,7 +76,7 @@ GET /file/:id
 
 Downloads the file
 
-Deletes it immediately after download
+Deletes it immediately after the number of downloads is reached
 
 
 curl http://localhost:8080/file/4a2f9d --output recovered.txt
