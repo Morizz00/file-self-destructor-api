@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Destruct Share</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-bomb"></i>
+                    <h1>Self-Destruct Share</h1>
+                </div>
+                <p class="tagline">Share files that disappear after download</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-card">
+                    <div class="upload-header">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h2>Upload File</h2>
+                        <p>Your file will self-destruct after the specified number of downloads</p>
+                    </div>
+
+                    <form id="uploadForm" class="upload-form">
+                        <div class="file-input-container">
+                            <input type="file" id="fileInput" class="file-input" required>
+                            <label for="fileInput" class="file-input-label">
+                                <i class="fas fa-plus"></i>
+                                <span>Choose file or drag & drop</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="downloads">Downloads Allowed</label>
+                            <input type="number" id="downloads" name="downloads" min="1" max="10" value="1" class="form-input">
+                            <small>Maximum 10 downloads</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Password (Optional)</label>
+                            <input type="password" id="password" name="password" class="form-input" placeholder="Leave empty for no password">
+                        </div>
+
+                        <button type="submit" class="upload-btn" id="uploadBtn">
+                            <i class="fas fa-rocket"></i>
+                            Upload & Generate Link
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Success Section -->
+            <section class="success-section" id="successSection" style="display: none;">
+                <div class="success-card">
+                    <div class="success-header">
+                        <i class="fas fa-check-circle"></i>
+                        <h2>Upload Successful!</h2>
+                        <p>Your file is ready to share</p>
+                    </div>
+
+                    <div class="share-info">
+                        <div class="file-info">
+                            <div class="file-icon">
+                                <i class="fas fa-file"></i>
+                            </div>
+                            <div class="file-details">
+                                <h3 id="fileName"></h3>
+                                <p id="fileSize"></p>
+                            </div>
+                        </div>
+
+                        <div class="share-link-container">
+                            <label for="shareLink">Share Link:</label>
+                            <div class="link-input-group">
+                                <input type="text" id="shareLink" class="share-link-input" readonly>
+                                <button type="button" class="copy-btn" id="copyBtn">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="download-info">
+                            <div class="info-item">
+                                <i class="fas fa-download"></i>
+                                <span>Downloads left: <strong id="downloadsLeft"></strong></span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-clock"></i>
+                                <span>Expires in: <strong>5 minutes</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-secondary" id="uploadAnotherBtn">
+                                <i class="fas fa-plus"></i>
+                                Upload Another
+                            </button>
+                            <button type="button" class="btn btn-primary" id="testDownloadBtn">
+                                <i class="fas fa-download"></i>
+                                Test Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Download Section -->
+            <section class="download-section" id="downloadSection" style="display: none;">
+                <div class="download-card">
+                    <div class="download-header">
+                        <i class="fas fa-download"></i>
+                        <h2>Download File</h2>
+                        <p>Enter the file ID to download</p>
+                    </div>
+
+                    <form id="downloadForm" class="download-form">
+                        <div class="form-group">
+                            <label for="fileId">File ID</label>
+                            <input type="text" id="fileId" name="fileId" class="form-input" placeholder="Enter file ID" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="downloadPassword">Password (if required)</label>
+                            <input type="password" id="downloadPassword" name="downloadPassword" class="form-input" placeholder="Enter password">
+                        </div>
+
+                        <button type="submit" class="download-btn" id="downloadBtn">
+                            <i class="fas fa-download"></i>
+                            Download File
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2024 Self-Destruct Share. Files expire after 5 minutes.</p>
+                <div class="footer-links">
+                    <button type="button" class="footer-link" id="downloadModeBtn">
+                        <i class="fas fa-download"></i>
+                        Download Mode
+                    </button>
+                    <button type="button" class="footer-link" id="uploadModeBtn">
+                        <i class="fas fa-upload"></i>
+                        Upload Mode
+                    </button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
