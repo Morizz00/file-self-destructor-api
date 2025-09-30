@@ -57,6 +57,7 @@ function handleFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
         updateFileInputLabel(file);
+        previewFile(file);
     }
 }
 
@@ -78,6 +79,7 @@ function handleDrop(event) {
     if (files.length > 0) {
         fileInput.files = files;
         updateFileInputLabel(files[0]);
+        previewFile(files[0]);
     }
 }
 
@@ -110,24 +112,18 @@ async function handleUpload(event) {
     const downloads = document.getElementById('downloads').value;
     const password = document.getElementById('password').value;
     
-    if (!file) {
-        showToast('Please select a file to upload', 'error');
+    try {
+        validateFile(file);
+    } catch (error) {
+        showToast(error.message, 'error');
         return;
     }
     
-    // Validate file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-        showToast('File size must be less than 10MB', 'error');
-        return;
-    }
-    
-    // Validate downloads count
     if (downloads < 1 || downloads > 10) {
         showToast('Downloads must be between 1 and 10', 'error');
         return;
     }
     
-    // Show loading state
     uploadBtn.disabled = true;
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
     
@@ -139,16 +135,7 @@ async function handleUpload(event) {
             formData.append('password', password);
         }
         
-        const response = await fetch(`${API_BASE_URL}/upload`, {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Upload failed: ${response.statusText}`);
-        }
-        
-        const responseText = await response.text();
+        const responseText = await uploadWithProgress(formData);
         const fileId = extractFileId(responseText);
         
         if (fileId) {
@@ -164,14 +151,12 @@ async function handleUpload(event) {
         console.error('Upload error:', error);
         showToast(`Upload failed: ${error.message}`, 'error');
     } finally {
-        // Reset button state
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = '<i class="fas fa-rocket"></i> Upload & Generate Link';
     }
 }
 
 function extractFileId(responseText) {
-    // Extract file ID from response like "File uploaded--Download:/file/abc123"
     const match = responseText.match(/\/file\/([a-f0-9]+)/);
     return match ? match[1] : null;
 }
@@ -188,7 +173,6 @@ async function handleDownload(event) {
         return;
     }
     
-    // Show loading state
     downloadBtn.disabled = true;
     downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading...';
     
@@ -212,7 +196,6 @@ async function handleDownload(event) {
             }
         }
         
-        // Get filename from Content-Disposition header
         const contentDisposition = response.headers.get('Content-Disposition');
         let filename = 'download';
         if (contentDisposition) {
@@ -221,8 +204,6 @@ async function handleDownload(event) {
                 filename = filenameMatch[1];
             }
         }
-        
-        // Create download link
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -398,6 +379,49 @@ function addVisualFeedback() {
     });
 }
 
+function validateFile(file){
+    const maxSize=10*1024*1024;
+    const allowedTypes=['image/','text/','application/pdf'];
+
+    if (!file){
+        throw new Error('No file selected');
+    }
+
+    if(file.size>maxSize){
+        throw new Error('File size must be less than 10MB');
+    }
+    
+    if (!allowedTypes.some(type=>file.type.startsWith(type))){
+        throw new Error('File type not allowed');
+    }
+    
+    return true;
+}
+
+function previewFile(file){
+    const reader=new FileReader();
+    reader.onload=(e)=>{
+        console.log('file preview ready');
+    };
+    reader.readAsDataURL(file);
+}
+function uploadWithProgress(formData){
+    return new Promise((resolve,reject)=>{
+        const xhr=new XMLHttpRequest();
+
+        xhr.upload.onprogress=(e)=>{
+            if (e.lengthComputable){
+                const percent=(e.loaded/e.total)*100;
+                console.log(`Upload progress: ${percent}%`);
+            }
+        };
+        xhr.onload=()=>resolve(xhr.responseText);
+        xhr.onerror=()=>reject(new Error('Upload failed'));
+
+        xhr.open('POST', `${API_BASE_URL}/upload`);
+        xhr.send(formData);
+    });
+}
 // Initialize visual feedback
 document.addEventListener('DOMContentLoaded', addVisualFeedback);
 
