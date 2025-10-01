@@ -24,6 +24,7 @@ const toastContainer = document.getElementById('toastContainer');
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     showUploadSection();
+    initializeDarkMode();
 });
 
 // Event Listeners
@@ -45,11 +46,20 @@ function initializeEventListeners() {
     // Copy button
     copyBtn.addEventListener('click', copyToClipboard);
     
+    // Copy ID button
+    document.getElementById('copyIdBtn').addEventListener('click', copyFileId);
+    
     // Navigation buttons
     uploadAnotherBtn.addEventListener('click', showUploadSection);
     testDownloadBtn.addEventListener('click', testDownload);
     uploadModeBtn.addEventListener('click', showUploadSection);
     downloadModeBtn.addEventListener('click', showDownloadSection);
+    
+    // Close preview button
+    document.getElementById('closePreview').addEventListener('click', hidePreview);
+    
+    // Dark mode toggle
+    document.getElementById('darkModeToggle').addEventListener('change', toggleDarkMode);
 }
 
 // File handling
@@ -110,6 +120,7 @@ async function handleUpload(event) {
     
     const file = fileInput.files[0];
     const downloads = document.getElementById('downloads').value;
+    const expiry = document.getElementById('expiry').value;
     const password = document.getElementById('password').value;
     
     try {
@@ -124,6 +135,11 @@ async function handleUpload(event) {
         return;
     }
     
+    if (expiry < 1 || expiry > 60) {
+        showToast('Expiry time must be between 1 and 60 minutes', 'error');
+        return;
+    }
+    
     uploadBtn.disabled = true;
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
     
@@ -131,19 +147,23 @@ async function handleUpload(event) {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('downloads', downloads);
+        formData.append('expiry', expiry);
         if (password) {
             formData.append('password', password);
         }
         
         const responseText = await uploadWithProgress(formData);
+        console.log('Upload response:', responseText); // Debug log
         const fileId = extractFileId(responseText);
+        console.log('Extracted file ID:', fileId); // Debug log
         
         if (fileId) {
             currentFileId = fileId;
             currentPassword = password;
-            showSuccessSection(file, downloads, password);
+            showSuccessSection(file, downloads, expiry, password);
             showToast('File uploaded successfully!', 'success');
         } else {
+            console.error('Failed to extract file ID. Response was:', responseText);
             throw new Error('Failed to extract file ID from response');
         }
         
@@ -157,6 +177,7 @@ async function handleUpload(event) {
 }
 
 function extractFileId(responseText) {
+    // Backend returns: "File uploaded--Download:/file/{id}\n"
     const match = responseText.match(/\/file\/([a-f0-9]+)/);
     return match ? match[1] : null;
 }
@@ -234,7 +255,7 @@ function showUploadSection() {
     resetUploadForm();
 }
 
-function showSuccessSection(file, downloads, password) {
+function showSuccessSection(file, downloads, expiry, password) {
     uploadSection.style.display = 'none';
     successSection.style.display = 'block';
     downloadSection.style.display = 'none';
@@ -244,8 +265,15 @@ function showSuccessSection(file, downloads, password) {
     document.getElementById('fileSize').textContent = formatFileSize(file.size);
     document.getElementById('downloadsLeft').textContent = downloads;
     
+    // Update expiry display
+    const expiryText = expiry === '1' ? '1 minute' : `${expiry} minutes`;
+    document.querySelector('.download-info .info-item:last-child span strong').textContent = expiryText;
+    
     const shareLink = `${window.location.origin}/download.html?id=${currentFileId}`;
     document.getElementById('shareLink').value = shareLink;
+    
+    // Display the file ID
+    document.getElementById('fileIdDisplay').value = currentFileId;
 }
 
 function showDownloadSection() {
@@ -263,6 +291,13 @@ function resetUploadForm() {
     `;
     currentFileId = null;
     currentPassword = '';
+    hidePreview();
+}
+
+// Hide preview function
+function hidePreview() {
+    const previewContainer = document.getElementById('filePreviewContainer');
+    previewContainer.style.display = 'none';
 }
 
 function resetDownloadForm() {
@@ -284,6 +319,24 @@ function copyToClipboard() {
             showToast('Link copied to clipboard!', 'success');
         }).catch(() => {
             showToast('Failed to copy link', 'error');
+        });
+    }
+}
+
+function copyFileId() {
+    const fileIdInput = document.getElementById('fileIdDisplay');
+    fileIdInput.select();
+    fileIdInput.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+        document.execCommand('copy');
+        showToast('File ID copied to clipboard!', 'success');
+    } catch (err) {
+        // Fallback for modern browsers
+        navigator.clipboard.writeText(fileIdInput.value).then(() => {
+            showToast('File ID copied to clipboard!', 'success');
+        }).catch(() => {
+            showToast('Failed to copy file ID', 'error');
         });
     }
 }
@@ -398,13 +451,101 @@ function validateFile(file){
     return true;
 }
 
-function previewFile(file){
-    const reader=new FileReader();
-    reader.onload=(e)=>{
-        console.log('file preview ready');
-    };
-    reader.readAsDataURL(file);
+function previewFile(file) {
+    const previewContainer = document.getElementById('filePreviewContainer');
+    const previewContent = document.getElementById('previewContent');
+
+    previewContainer.style.display = 'block';
+    
+    
+    previewContent.innerHTML = '';
+    
+
+    const fileType = file.type;
+    const fileName = file.name;
+    const fileSize = formatFileSize(file.size);
+    
+    if (fileType.startsWith('image/')) {
+        // Image preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewContent.innerHTML = `
+                <div class="preview-image">
+                    <img src="${e.target.result}" alt="${fileName}" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
+                    <div class="preview-info">
+                        <p><strong>${fileName}</strong></p>
+                        <p>Size: ${fileSize}</p>
+                        <p>Type: ${fileType}</p>
+                    </div>
+                </div>
+            `;
+        };
+        reader.readAsDataURL(file);
+    } else if (fileType.startsWith('text/') || fileName.endsWith('.txt') || fileName.endsWith('.md') || fileName.endsWith('.json')) {
+        // Text file preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const text = e.target.result;
+            const previewText = text.length > 500 ? text.substring(0, 500) + '...' : text;
+            previewContent.innerHTML = `
+                <div class="preview-text">
+                    <div class="preview-info">
+                        <p><strong>${fileName}</strong></p>
+                        <p>Size: ${fileSize}</p>
+                        <p>Type: ${fileType}</p>
+                    </div>
+                    <div class="text-content">
+                        <pre>${previewText}</pre>
+                    </div>
+                </div>
+            `;
+        };
+        reader.readAsText(file);
+    } else {
+        // Generic file preview with icon
+        const fileIcon = getFileIcon(fileType, fileName);
+        previewContent.innerHTML = `
+            <div class="preview-generic">
+                <div class="file-icon-large">
+                    <i class="${fileIcon}"></i>
+                </div>
+                <div class="preview-info">
+                    <p><strong>${fileName}</strong></p>
+                    <p>Size: ${fileSize}</p>
+                    <p>Type: ${fileType || 'Unknown'}</p>
+                </div>
+            </div>
+        `;
+    }
 }
+
+
+function getFileIcon(fileType, fileName) {
+    if (fileType.startsWith('image/')) {
+        return 'fas fa-image';
+    } else if (fileType.startsWith('video/')) {
+        return 'fas fa-video';
+    } else if (fileType.startsWith('audio/')) {
+        return 'fas fa-music';
+    } else if (fileType.startsWith('text/') || fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+        return 'fas fa-file-alt';
+    } else if (fileName.endsWith('.pdf')) {
+        return 'fas fa-file-pdf';
+    } else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+        return 'fas fa-file-word';
+    } else if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+        return 'fas fa-file-excel';
+    } else if (fileName.endsWith('.ppt') || fileName.endsWith('.pptx')) {
+        return 'fas fa-file-powerpoint';
+    } else if (fileName.endsWith('.zip') || fileName.endsWith('.rar') || fileName.endsWith('.7z')) {
+        return 'fas fa-file-archive';
+    } else if (fileName.endsWith('.json') || fileName.endsWith('.xml')) {
+        return 'fas fa-file-code';
+    } else {
+        return 'fas fa-file';
+    }
+}
+
 function uploadWithProgress(formData){
     return new Promise((resolve,reject)=>{
         const xhr=new XMLHttpRequest();
@@ -415,15 +556,53 @@ function uploadWithProgress(formData){
                 console.log(`Upload progress: ${percent}%`);
             }
         };
-        xhr.onload=()=>resolve(xhr.responseText);
-        xhr.onerror=()=>reject(new Error('Upload failed'));
+        xhr.onload=()=>{
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(xhr.responseText);
+            } else {
+                reject(new Error(`Server error: ${xhr.status} - ${xhr.responseText}`));
+            }
+        };
+        xhr.onerror=()=>reject(new Error('Network error - check if server is running'));
 
         xhr.open('POST', `${API_BASE_URL}/upload`);
         xhr.send(formData);
     });
 }
-// Initialize visual feedback
+
 document.addEventListener('DOMContentLoaded', addVisualFeedback);
+
+
+function toggleDarkMode() {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const body = document.body;
+    
+    if (darkModeToggle.checked) {
+        body.classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'enabled');
+        showToast('Dark mode enabled', 'success');
+    } else {
+        body.classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'disabled');
+        showToast('Light mode enabled', 'success');
+    }
+}
+
+function initializeDarkMode() {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const body = document.body;
+    
+
+    const darkModeEnabled = localStorage.getItem('darkMode') === 'enabled';
+    
+    if (darkModeEnabled) {
+        body.classList.add('dark-mode');
+        darkModeToggle.checked = true;
+    } else {
+        body.classList.remove('dark-mode');
+        darkModeToggle.checked = false;
+    }
+}
 
 // Add keyboard shortcuts
 document.addEventListener('keydown', function(event) {

@@ -18,12 +18,12 @@ func init() {
 	})
 }
 
-func StoreFile(key string, file StoredFile) error {
+func StoreFile(key string, file StoredFile, expiry time.Duration) error {
 	u, err := json.Marshal(file)
 	if err != nil {
 		return err
 	}
-	return rdb.Set(ctx, key, u, time.Minute*5).Err()
+	return rdb.Set(ctx, key, u, expiry).Err()
 }
 
 //	func GetAndDelete(key string) (StoredFile, error) {

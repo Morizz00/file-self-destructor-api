@@ -5,18 +5,11 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Morizz00/self-destruct-share-api/storage"
 	"github.com/Morizz00/self-destruct-share-api/utils"
 )
-
-type StoredFile struct {
-	FileName      string `json:"filename"`
-	MIME          string `json:"mime"`
-	Data          []byte `json:"date"`
-	Password      string `json:"password"`
-	DownloadsLeft int    `json:"downloads_left"`
-}
 
 func Upload(w http.ResponseWriter, r *http.Request) {
 	file, fileHeader, err := r.FormFile("file")
@@ -28,6 +21,11 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 	downloads := 1
 	if parsed, err := strconv.Atoi(r.FormValue("downloads")); err == nil && parsed > 0 {
 		downloads = parsed
+	}
+
+	expiry := 5 * time.Minute
+	if parsed, err := strconv.Atoi(r.FormValue("expiry")); err == nil && parsed > 0 {
+		expiry = time.Duration(parsed) * time.Minute
 	}
 
 	defer file.Close()
@@ -43,9 +41,10 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 		Data:          fileData,
 		Password:      password,
 		DownloadsLeft: downloads,
+		Expiry:        expiry,
 	}
 	id := utils.GenerateID()
-	err = storage.StoreFile(id, storeIt)
+	err = storage.StoreFile(id, storeIt, expiry)
 
 	if err != nil {
 		http.Error(w, "storage error", http.StatusInternalServerError)

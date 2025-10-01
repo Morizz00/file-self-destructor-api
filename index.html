@@ -18,6 +18,22 @@
                     <h1>Self-Destruct Share</h1>
                 </div>
                 <p class="tagline">Share files that disappear after download</p>
+                
+                <!-- Dark Mode Toggle -->
+                <div class="theme-toggle">
+                    <span class="theme-label">
+                        <i class="fas fa-sun"></i>
+                        Light
+                    </span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="darkModeToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="theme-label">
+                        <i class="fas fa-moon"></i>
+                        Dark
+                    </span>
+                </div>
             </div>
         </header>
 
@@ -41,10 +57,29 @@
                             </label>
                         </div>
 
+                        <!-- File Preview Container -->
+                        <div class="file-preview-container" id="filePreviewContainer" style="display: none;">
+                            <div class="preview-header">
+                                <h3>File Preview</h3>
+                                <button type="button" class="close-preview" id="closePreview">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="preview-content" id="previewContent">
+                                <!-- Preview content will be inserted here -->
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label for="downloads">Downloads Allowed</label>
                             <input type="number" id="downloads" name="downloads" min="1" max="10" value="1" class="form-input">
                             <small>Maximum 10 downloads</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="expiry">Expiry Time (minutes)</label>
+                            <input type="number" id="expiry" name="expiry" min="1" max="60" value="5" class="form-input">
+                            <small>File will expire after this many minutes (1-60 minutes)</small>
                         </div>
 
                         <div class="form-group">
@@ -85,6 +120,16 @@
                             <div class="link-input-group">
                                 <input type="text" id="shareLink" class="share-link-input" readonly>
                                 <button type="button" class="copy-btn" id="copyBtn">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="file-id-container">
+                            <label for="fileIdDisplay">File ID:</label>
+                            <div class="id-input-group">
+                                <input type="text" id="fileIdDisplay" class="file-id-input" readonly>
+                                <button type="button" class="copy-id-btn" id="copyIdBtn">
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
@@ -147,7 +192,7 @@
         <!-- Footer -->
         <footer class="footer">
             <div class="footer-content">
-                <p>&copy; 2024 Self-Destruct Share. Files expire after 5 minutes.</p>
+                <p>&copy; 2024 Self-Destruct Share. Files expire after the specified time.</p>
                 <div class="footer-links">
                     <button type="button" class="footer-link" id="downloadModeBtn">
                         <i class="fas fa-download"></i>
