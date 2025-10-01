@@ -432,6 +432,30 @@ function addVisualFeedback() {
     });
 }
 
+function showProgress(){
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+
+    progressContainer.style.display = 'block';
+    let progress=0;
+    const interval=setInterval(()=>{
+        progress+Math.random()*10;
+        if (progress>10) progress=10;
+        
+        progressFill.style.width = `${progress}%`;
+        progressText.textContent = `${progress}%`;
+
+        if (progress>=100){
+            clearInterval(interval);
+            setTimeout(()=>{
+                progressContainer.style.display = 'none';
+
+            },1000);
+        }
+    },200);
+}
+
 function validateFile(file){
     const maxSize=10*1024*1024;
     const allowedTypes=['image/','text/','application/pdf'];
