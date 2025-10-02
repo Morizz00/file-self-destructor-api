@@ -175,7 +175,32 @@ async function handleUpload(event) {
         uploadBtn.innerHTML = '<i class="fas fa-rocket"></i> Upload & Generate Link';
     }
 }
+function startCountdown(mins,eId){
+    const el=document.getElementById(eId);
+    let tot-min*60;
 
+    const timer=setInterval(()=>{
+        const hours=Math.floor(tot/3600);
+        const mins=Math.floor((tot%3600)/60);
+        const secs=Math.floor(tot%60);
+
+
+        const timeString=hours>0
+        ? `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+        : `${mins}:${secs.toString().padStart(2, '0')}`;
+
+        element.textContent=timeString;
+
+        if (totalSeconds<=0){
+            clearInterval(timer);
+            element.textContent='Expired';
+            element.style.color='#ff4444';
+        }
+        tot--;
+
+    },1000);
+    return timer
+}
 function extractFileId(responseText) {
     // Backend returns: "File uploaded--Download:/file/{id}\n"
     const match = responseText.match(/\/file\/([a-f0-9]+)/);
