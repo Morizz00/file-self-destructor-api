@@ -25,12 +25,25 @@ func main() {
 		MaxAge:           300,
 	}))
 
+	// API routes
 	r.Post("/upload", handlers.Upload)
 	r.Get("/file/{id}", handlers.DownloadFile)
 
-	// Serve static files (HTML, CSS, JS)
-	fileServer := http.FileServer(http.Dir("."))
-	r.Handle("/*", fileServer)
+	// Serve static files
+	fs := http.FileServer(http.Dir("."))
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "index.html")
+	})
+	r.Get("/download.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "download.html")
+	})
+	r.Get("/styles.css", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "styles.css")
+	})
+	r.Get("/script.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "script.js")
+	})
+	r.Handle("/static/*", http.StripPrefix("/static/", fs))
 
 	// Get port from environment variable or use 8080 as default
 	port := os.Getenv("PORT")
