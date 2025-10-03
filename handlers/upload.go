@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -18,6 +19,20 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	password := r.FormValue("password")
+	slug := r.FormValue("slug")
+	if slug != "" {
+		matched, _ := regexp.MatchString("^[a-z0-9-]+$", slug)
+		if !matched {
+			http.Error(w, "Invalid slug format", http.StatusBadRequest)
+			return
+		}
+
+		_, err := storage.Get(slug)
+		if err == nil {
+			http.Error(w, "this custom link is already taker,try another one", http.StatusBadRequest)
+			return
+		}
+	}
 	downloads := 1
 	if parsed, err := strconv.Atoi(r.FormValue("downloads")); err == nil && parsed > 0 {
 		downloads = parsed
@@ -31,7 +46,7 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 	fileData, err := io.ReadAll(file)
 	if err != nil {
-		http.Error(w, "Failed to read ts shi", http.StatusInternalServerError)
+		http.Error(w, "Failed to read file", http.StatusInternalServerError)
 		return
 	}
 
@@ -43,7 +58,12 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 		DownloadsLeft: downloads,
 		Expiry:        expiry,
 	}
-	id := utils.GenerateID()
+	var id string
+	if slug != "" {
+		id = slug
+	} else {
+		id = utils.GenerateID()
+	}
 	err = storage.StoreFile(id, storeIt, expiry)
 
 	if err != nil {

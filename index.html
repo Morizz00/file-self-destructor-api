@@ -3,10 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Self-Destruct Share</title>
+    <meta property="og:title" content="FileOrcha - Secure File Sharing">
+    <meta property="og:description" content="Share files securely with self-destructing links. Files auto-delete after download.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="http://localhost:5500">
+    <meta property="og:image" content="https://via.placeholder.com/1200x630/3b82f6/ffffff?text=FileOrcha">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FileOrcha">
+    <meta name="twitter:description" content="Secure file sharing with auto-expiring links">
+    <title>FileOrcha - Secure File Sharing</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -15,7 +24,7 @@
             <div class="header-content">
                 <div class="logo">
                     <i class="fas fa-bomb"></i>
-                    <h1>Self-Destruct Share</h1>
+                    <h1>FileOrcha</h1>
                 </div>
                 <p class="tagline">Share files that disappear after download</p>
                 
@@ -77,9 +86,15 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="expiry">Expiry Time (minutes)</label>
-                            <input type="number" id="expiry" name="expiry" min="1" max="60" value="5" class="form-input">
-                            <small>File will expire after this many minutes (1-60 minutes)</small>
+                            <label for="expiry">Expiry Time</label>
+                            <div class="expiry-presets">
+                                <button type="button" class="preset-btn" data-minutes="5">5 min</button>
+                                <button type="button" class="preset-btn" data-minutes="60">1 hour</button>
+                                <button type="button" class="preset-btn" data-minutes="1440">1 day</button>
+                                <button type="button" class="preset-btn" data-minutes="10080">7 days</button>
+                            </div>
+                            <input type="number" id="expiry" name="expiry" min="1" max="10080" value="5" class="form-input">
+                            <small>File will expire after this time (up to 7 days)</small>
                         </div>
 
                         <div class="form-group">
@@ -87,6 +102,14 @@
                             <input type="password" id="password" name="password" class="form-input" placeholder="Leave empty for no password">
                         </div>
 
+                        <div class="form-group">
+                            <label for="customSlug>"Custom Link(optional)
+                                <span class="slug-prefix">/file/</span>
+                                <input type="text" id="customSlug" name="customSlug" class="form-input" placeholder="Enter custom slug" pattern="[a-z0-9-]+" maxlength="50">
+                        </div>>
+                        <small>Only lowercase letters,numbers,and hyphens(e.g.,my-file-2024)</small>>
+                    </div>
+                    <div class="form-group">
                         <!-- Progress Bar -->
                         <div class="progress-container" id="progressContainer" style="display: none;">
                             <div class="progress-bar">
@@ -143,6 +166,18 @@
                             </div>
                         </div>
 
+                        <!-- QR Code Section -->
+                        <div class="qr-code-container">
+                            <label>QR Code:</label>
+                            <div class="qr-code-wrapper">
+                                <div id="qrcode"></div>
+                                <button type="button" class="btn btn-secondary" id="downloadQRBtn" style="margin-top: 10px;">
+                                    <i class="fas fa-qrcode"></i>
+                                    Download QR Code
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="download-info">
                             <div class="info-item">
                                 <i class="fas fa-download"></i>
@@ -150,8 +185,12 @@
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-clock"></i>
-                                <span>Expires in: <strong>5 minutes</strong></span>
+                                <span>Expires in: <strong id="expiryCountdown">Calculating...</strong></span>
                             </div>
+                            <div class="info-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Uploaded on: <strong id="uploadTime">Just now</strong></span>
+                            </div>>
                         </div>
 
                         <div class="action-buttons">
@@ -200,7 +239,7 @@
         <!-- Footer -->
         <footer class="footer">
             <div class="footer-content">
-                <p>&copy; 2024 Self-Destruct Share. Files expire after the specified time.</p>
+                <p>&copy; 2024 FileOrcha. Files expire after the specified time.</p>
                 <div class="footer-links">
                     <button type="button" class="footer-link" id="downloadModeBtn">
                         <i class="fas fa-download"></i>

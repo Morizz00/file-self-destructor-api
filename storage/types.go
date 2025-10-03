@@ -5,8 +5,8 @@ import "time"
 type StoredFile struct {
 	FileName      string        `json:"filename"`
 	MIME          string        `json:"mime"`
-	Data          []byte        `json:"date"`
+	Data          []byte        `json:"data"`
 	Password      string        `json:"password"`
-	DownloadsLeft int           `json:"downloads left"`
+	DownloadsLeft int           `json:"downloadleft"`
 	Expiry        time.Duration `json:"expiry"`
 }

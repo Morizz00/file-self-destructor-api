@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/Morizz00/self-destruct-share-api/handlers"
 
@@ -27,6 +28,12 @@ func main() {
 	r.Post("/upload", handlers.Upload)
 	r.Get("/file/{id}", handlers.DownloadFile)
 
-	log.Println("Listening on :8080")
-	http.ListenAndServe(":8080", r)
+	// Get port from environment variable or use 8080 as default
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Listening on :%s", port)
+	http.ListenAndServe(":"+port, r)
 }

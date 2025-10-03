@@ -48,6 +48,21 @@ function initializeEventListeners() {
     
     // Copy ID button
     document.getElementById('copyIdBtn').addEventListener('click', copyFileId);
+
+    const slugInput = document.getElementById('customSlug');
+    slugInput.addEventListener('input',function(){
+        this.value = this.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    
+    // Visual feedback
+    if (this.value && !/^[a-z0-9-]+$/.test(this.value)) {
+        this.style.borderColor = '#ff4444';
+    } else {
+        this.style.borderColor = '';
+    }
+});
+    
+    // Download QR button
+    document.getElementById('downloadQRBtn').addEventListener('click', downloadQRCode);
     
     // Navigation buttons
     uploadAnotherBtn.addEventListener('click', showUploadSection);
@@ -60,6 +75,19 @@ function initializeEventListeners() {
     
     // Dark mode toggle
     document.getElementById('darkModeToggle').addEventListener('change', toggleDarkMode);
+    
+    // Expiry preset buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const minutes = this.getAttribute('data-minutes');
+            document.getElementById('expiry').value = minutes;
+            
+            // Visual feedback
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
 }
 
 // File handling
@@ -135,8 +163,8 @@ async function handleUpload(event) {
         return;
     }
     
-    if (expiry < 1 || expiry > 60) {
-        showToast('Expiry time must be between 1 and 60 minutes', 'error');
+    if (expiry < 1 || expiry > 10080) {
+        showToast('Expiry time must be between 1 minute and 7 days', 'error');
         return;
     }
     
@@ -151,6 +179,19 @@ async function handleUpload(event) {
         if (password) {
             formData.append('password', password);
         }
+
+        const customSlug = document.getElementById('customSlug').value.trim();
+        if (customSlug) {
+            if (!/^[a-z0-9-]+$/.test(customSlug)) {
+                showToast('Custom link must contain only lowercase letters, numbers, and hyphens', 'error');
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-rocket"></i> Upload & Generate Link';
+                return;
+            }
+            formData.append('slug', customSlug);
+        }
+
+        
         
         const responseText = await uploadWithProgress(formData);
         console.log('Upload response:', responseText); // Debug log
@@ -175,35 +216,34 @@ async function handleUpload(event) {
         uploadBtn.innerHTML = '<i class="fas fa-rocket"></i> Upload & Generate Link';
     }
 }
-function startCountdown(mins,eId){
-    const el=document.getElementById(eId);
-    let tot-min*60;
+function startCountdown(mins, eId) {
+    const el = document.getElementById(eId);
+    let tot = mins * 60;
 
-    const timer=setInterval(()=>{
-        const hours=Math.floor(tot/3600);
-        const mins=Math.floor((tot%3600)/60);
-        const secs=Math.floor(tot%60);
+    const timer = setInterval(() => {
+        const hours = Math.floor(tot / 3600);
+        const minutes = Math.floor((tot % 3600) / 60);
+        const secs = Math.floor(tot % 60);
 
+        const timeString = hours > 0
+            ? `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+            : `${minutes}:${secs.toString().padStart(2, '0')}`;
 
-        const timeString=hours>0
-        ? `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-        : `${mins}:${secs.toString().padStart(2, '0')}`;
+        el.textContent = timeString;
 
-        element.textContent=timeString;
-
-        if (totalSeconds<=0){
+        if (tot <= 0) {
             clearInterval(timer);
-            element.textContent='Expired';
-            element.style.color='#ff4444';
+            el.textContent = 'Expired';
+            el.style.color = '#ff4444';
         }
         tot--;
 
-    },1000);
-    return timer
+    }, 1000);
+    return timer;
 }
 function extractFileId(responseText) {
     // Backend returns: "File uploaded--Download:/file/{id}\n"
-    const match = responseText.match(/\/file\/([a-f0-9]+)/);
+    const match = responseText.match(/\/file\/([a-z0-9-]+)/);
     return match ? match[1] : null;
 }
 
@@ -299,6 +339,53 @@ function showSuccessSection(file, downloads, expiry, password) {
     
     // Display the file ID
     document.getElementById('fileIdDisplay').value = currentFileId;
+
+    // Generate QR Code
+    const qrcodeContainer = document.getElementById('qrcode');
+    qrcodeContainer.innerHTML = ''; // Clear previous QR
+    new QRCode(qrcodeContainer, {
+        text: shareLink,
+        width: 200,
+        height: 200,
+        colorDark: '#000000',
+        colorLight: '#ffffff'
+    });
+    // Calculate expiry time and start countdown
+const expiryMinutes = parseInt(expiry);
+const expiryTime = new Date(Date.now() + expiryMinutes * 60 * 1000);
+
+function updateCountdown() {
+    const now = new Date();
+    const remaining = expiryTime - now;
+    
+    if (remaining <= 0) {
+        document.getElementById('expiryCountdown').textContent = 'Expired';
+        document.getElementById('expiryCountdown').style.color = '#ff4444';
+        return;
+    }
+    
+    const hours = Math.floor(remaining / (1000 * 60 * 60));
+    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+    
+    const formatted = hours > 0 
+        ? `${hours}h ${minutes}m ${seconds}s`
+        : `${minutes}m ${seconds}s`;
+    
+    document.getElementById('expiryCountdown').textContent = formatted;
+}
+
+// Update countdown every second
+updateCountdown();
+const countdownInterval = setInterval(updateCountdown, 1000);
+
+// Set upload time
+const now = new Date();
+const timeStr = now.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+});
+document.getElementById('uploadTime').textContent = timeStr;
 }
 
 function showDownloadSection() {
@@ -317,6 +404,8 @@ function resetUploadForm() {
     currentFileId = null;
     currentPassword = '';
     hidePreview();
+
+    document.getElementById('qrcode').innerHTML = '';
 }
 
 // Hide preview function
@@ -363,6 +452,18 @@ function copyFileId() {
         }).catch(() => {
             showToast('Failed to copy file ID', 'error');
         });
+    }
+}
+
+function downloadQRCode() {
+    const canvas = document.querySelector('#qrcode canvas');
+    if (canvas) {
+        const url = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `qr-code-${currentFileId}.png`;
+        a.click();
+        showToast('QR Code downloaded!', 'success');
     }
 }
 
@@ -457,46 +558,41 @@ function addVisualFeedback() {
     });
 }
 
-function showProgress(){
+function showProgress() {
     const progressContainer = document.getElementById('progressContainer');
     const progressFill = document.getElementById('progressFill');
     const progressText = document.getElementById('progressText');
 
     progressContainer.style.display = 'block';
-    let progress=0;
-    const interval=setInterval(()=>{
-        progress+Math.random()*10;
-        if (progress>10) progress=10;
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress > 100) progress = 100;
         
         progressFill.style.width = `${progress}%`;
-        progressText.textContent = `${progress}%`;
+        progressText.textContent = `${Math.floor(progress)}%`;
 
-        if (progress>=100){
+        if (progress >= 100) {
             clearInterval(interval);
-            setTimeout(()=>{
+            setTimeout(() => {
                 progressContainer.style.display = 'none';
-
-            },1000);
+            }, 1000);
         }
-    },200);
+    }, 200);
 }
 
-function validateFile(file){
-    const maxSize=10*1024*1024;
-    const allowedTypes=['image/','text/','application/pdf'];
+function validateFile(file) {
+    const maxSize = 50 * 1024 * 1024; // Increased to 50MB
 
-    if (!file){
+    if (!file) {
         throw new Error('No file selected');
     }
 
-    if(file.size>maxSize){
-        throw new Error('File size must be less than 10MB');
+    if (file.size > maxSize) {
+        throw new Error('File size must be less than 50MB');
     }
     
-    if (!allowedTypes.some(type=>file.type.startsWith(type))){
-        throw new Error('File type not allowed');
-    }
-    
+    // Allow all file types for flexibility
     return true;
 }
 
@@ -572,47 +668,69 @@ function previewFile(file) {
 function getFileIcon(fileType, fileName) {
     if (fileType.startsWith('image/')) {
         return 'fas fa-image';
-    } else if (fileType.startsWith('video/')) {
+    } 
+    // Videos
+    else if (fileType.startsWith('video/')) {
         return 'fas fa-video';
-    } else if (fileType.startsWith('audio/')) {
+    } 
+    // Audio
+    else if (fileType.startsWith('audio/')) {
         return 'fas fa-music';
-    } else if (fileType.startsWith('text/') || fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+    } 
+    // Text files
+    else if (fileType.startsWith('text/') || fileName.endsWith('.txt') || fileName.endsWith('.md')) {
         return 'fas fa-file-alt';
-    } else if (fileName.endsWith('.pdf')) {
+    } 
+    // Documents
+    else if (fileName.endsWith('.pdf')) {
         return 'fas fa-file-pdf';
-    } else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+    } 
+    else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
         return 'fas fa-file-word';
-    } else if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+    } 
+    else if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
         return 'fas fa-file-excel';
-    } else if (fileName.endsWith('.ppt') || fileName.endsWith('.pptx')) {
+    } 
+    else if (fileName.endsWith('.ppt') || fileName.endsWith('.pptx')) {
         return 'fas fa-file-powerpoint';
-    } else if (fileName.endsWith('.zip') || fileName.endsWith('.rar') || fileName.endsWith('.7z')) {
+    } 
+    // Archives
+    else if (fileName.endsWith('.zip') || fileName.endsWith('.rar') || fileName.endsWith('.7z') || fileName.endsWith('.tar') || fileName.endsWith('.gz')) {
         return 'fas fa-file-archive';
-    } else if (fileName.endsWith('.json') || fileName.endsWith('.xml')) {
+    } 
+    // Code files
+    else if (fileName.endsWith('.json') || fileName.endsWith('.xml') || fileName.endsWith('.html') || fileName.endsWith('.css') || fileName.endsWith('.js') || fileName.endsWith('.py') || fileName.endsWith('.go') || fileName.endsWith('.java') || fileName.endsWith('.cpp')) {
         return 'fas fa-file-code';
-    } else {
+    }
+    // Executables
+    else if (fileName.endsWith('.exe') || fileName.endsWith('.msi') || fileName.endsWith('.dmg') || fileName.endsWith('.apk')) {
+        return 'fas fa-cog';
+    }
+    // Default
+    else {
         return 'fas fa-file';
     }
 }
 
-function uploadWithProgress(formData){
-    return new Promise((resolve,reject)=>{
-        const xhr=new XMLHttpRequest();
 
-        xhr.upload.onprogress=(e)=>{
-            if (e.lengthComputable){
-                const percent=(e.loaded/e.total)*100;
+function uploadWithProgress(formData) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const percent = (e.loaded / e.total) * 100;
                 console.log(`Upload progress: ${percent}%`);
             }
         };
-        xhr.onload=()=>{
+        xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
                 resolve(xhr.responseText);
             } else {
                 reject(new Error(`Server error: ${xhr.status} - ${xhr.responseText}`));
             }
         };
-        xhr.onerror=()=>reject(new Error('Network error - check if server is running'));
+        xhr.onerror = () => reject(new Error('Network error - check if server is running'));
 
         xhr.open('POST', `${API_BASE_URL}/upload`);
         xhr.send(formData);
@@ -677,15 +795,15 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// Add service worker for offline functionality (optional)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js')
-            .then(function(registration) {
-                console.log('ServiceWorker registration successful');
-            })
-            .catch(function(err) {
-                console.log('ServiceWorker registration failed');
-            });
-    });
-}
+// Service worker disabled - uncomment if you add sw.js
+// if ('serviceWorker' in navigator) {
+//     window.addEventListener('load', function() {
+//         navigator.serviceWorker.register('/sw.js')
+//             .then(function(registration) {
+//                 console.log('ServiceWorker registration successful');
+//             })
+//             .catch(function(err) {
+//                 console.log('ServiceWorker registration failed');
+//             });
+//     });
+// }

@@ -11,23 +11,23 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	storedData, err := storage.Get(id)
 	if err != nil {
-		http.Error(w, "file expired or not foundszies", http.StatusNotFound)
+		http.Error(w, "File not found or expired", http.StatusNotFound)
 		return
 	}
 	fileData := storedData.Data
 	password := r.URL.Query().Get("password")
 	if storedData.Password != "" && storedData.Password != password {
-		http.Error(w, "wrong or missing password lil bud", http.StatusForbidden)
+		http.Error(w, "Wrong or missing password", http.StatusForbidden)
 		return
 	}
 	if storedData.DownloadsLeft <= 0 {
-		http.Error(w, "No downloads left lil bro", http.StatusGone)
+		http.Error(w, "No downloads remaining", http.StatusGone)
 		return
 	}
 	if storedData.DownloadsLeft == 1 {
 		err := storage.Delete(id)
 		if err != nil {
-			http.Error(w, "Failed to self-destruct lil bro", http.StatusInternalServerError)
+			http.Error(w, "Failed to self-destruct file", http.StatusInternalServerError)
 			return
 		}
 	} else {

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -12,8 +13,13 @@ var ctx = context.Background()
 var rdb *redis.Client
 
 func init() {
+	redisAddr := os.Getenv("REDIS_URL")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+
 	rdb = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: redisAddr,
 		DB:   0,
 	})
 }
