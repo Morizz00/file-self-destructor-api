@@ -1,5 +1,5 @@
 // Global variables
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = window.location.origin;
 let currentFileId = null;
 let currentPassword = '';
 
