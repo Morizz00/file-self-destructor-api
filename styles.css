@@ -54,9 +54,9 @@ body:not(.dark-mode)::before {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 2rem 5%;
     min-height: 100vh;
 }
 
@@ -68,7 +68,7 @@ body:not(.dark-mode)::before {
 }
 
 .header-content {
-    max-width: 600px;
+    max-width: 800px;
     margin: 0 auto;
 }
 
@@ -183,11 +183,12 @@ body:not(.dark-mode)::before {
 .upload-card, .success-card, .download-card {
     background: var(--bg-secondary);
     border-radius: 1.5rem;
-    padding: 2.5rem;
+    padding: 3rem;
     border: 1px solid var(--border);
     backdrop-filter: blur(10px);
-    max-width: 700px;
+    max-width: 1400px;
     margin: 0 auto;
+    width: 100%;
     transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1),
                 border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -455,24 +456,26 @@ body:not(.dark-mode)::before {
 .upload-btn, .download-btn, .btn {
     width: 100%;
     padding: 1rem 2rem;
-    background: var(--accent);
-    color: white;
+    background: transparent;
+    color: var(--text-primary);
     border: none;
-    border-radius: 0.75rem;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
 }
 
 .upload-btn:hover, .download-btn:hover, .btn-primary:hover {
-    background: var(--accent-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+    color: var(--accent);
+    background: rgba(59, 130, 246, 0.05);
 }
 
 .upload-btn:disabled, .download-btn:disabled {
