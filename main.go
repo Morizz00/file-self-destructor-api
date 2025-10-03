@@ -28,6 +28,10 @@ func main() {
 	r.Post("/upload", handlers.Upload)
 	r.Get("/file/{id}", handlers.DownloadFile)
 
+	// Serve static files (HTML, CSS, JS)
+	fileServer := http.FileServer(http.Dir("."))
+	r.Handle("/*", fileServer)
+
 	// Get port from environment variable or use 8080 as default
 	port := os.Getenv("PORT")
 	if port == "" {
