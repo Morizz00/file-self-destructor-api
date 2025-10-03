@@ -747,11 +747,11 @@ function toggleDarkMode() {
     if (darkModeToggle.checked) {
         body.classList.add('dark-mode');
         localStorage.setItem('darkMode', 'enabled');
-        showToast('Dark mode enabled', 'success');
+        setTimeout(() => showToast('Dark mode enabled', 'success'), 500);
     } else {
         body.classList.remove('dark-mode');
         localStorage.setItem('darkMode', 'disabled');
-        showToast('Light mode enabled', 'success');
+        setTimeout(() => showToast('Light mode enabled', 'success'), 500);
     }
 }
 
@@ -759,7 +759,6 @@ function initializeDarkMode() {
     const darkModeToggle = document.getElementById('darkModeToggle');
     const body = document.body;
     
-
     const darkModeEnabled = localStorage.getItem('darkMode') === 'enabled';
     
     if (darkModeEnabled) {
