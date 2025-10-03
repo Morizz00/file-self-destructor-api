@@ -13,15 +13,17 @@ var ctx = context.Background()
 var rdb *redis.Client
 
 func init() {
-	redisAddr := os.Getenv("REDIS_URL")
-	if redisAddr == "" {
-		redisAddr = "localhost:6379"
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL == "" {
+		redisURL = "redis://localhost:6379"
 	}
 
-	rdb = redis.NewClient(&redis.Options{
-		Addr: redisAddr,
-		DB:   0,
-	})
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		panic("Failed to parse REDIS_URL: " + err.Error())
+	}
+
+	rdb = redis.NewClient(opt)
 }
 
 func StoreFile(key string, file StoredFile, expiry time.Duration) error {
