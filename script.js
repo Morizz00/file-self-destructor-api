@@ -72,8 +72,6 @@ function initializeEventListeners() {
     uploadModeBtn.addEventListener('click', showUploadSection);
     downloadModeBtn.addEventListener('click', showDownloadSection);
     
-    // Close preview button
-    document.getElementById('closePreview').addEventListener('click', hidePreview);
     
     // Dark mode toggle
     document.getElementById('darkModeToggle').addEventListener('change', toggleDarkMode);
@@ -97,7 +95,6 @@ function handleFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
         updateFileInputLabel(file);
-        previewFile(file);
     }
 }
 
