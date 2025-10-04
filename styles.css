@@ -363,6 +363,39 @@ body:not(.dark-mode)::before {
 }
 
 .preview-info p {
+    margin: 0.5rem 0;
+    color: var(--text-secondary);
+}
+
+.preview-image,
+.preview-text,
+.preview-generic {
+    padding: 1rem;
+}
+
+.preview-generic {
+    text-align: center;
+}
+
+.file-icon-large {
+    font-size: 4rem;
+    color: var(--accent);
+    margin-bottom: 1rem;
+}
+
+.preview-text pre {
+    background: var(--bg-primary);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    color: var(--text-primary);
+}
+
+.text-content {
+    margin-top: 1rem;
+}
+
+.preview-info p {
     color: var(--text-secondary);
     margin: 0.25rem 0;
 }
