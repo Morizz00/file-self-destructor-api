@@ -20,14 +20,14 @@ func main() {
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
+		ExposedHeaders:   []string{"Link", "X-File-Name", "X-File-Size", "X-Downloads-Left"},
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
 
 	r.Post("/upload", handlers.Upload)
 	r.Get("/file/{id}", handlers.DownloadFile)
-	r.Get("/file/{id}/preview", handlers.Preview)
+	r.Get("/preview/{id}", handlers.Preview)
 	fs := http.FileServer(http.Dir("."))
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")

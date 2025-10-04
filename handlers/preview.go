@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/Morizz00/self-destruct-share-api/storage"
 	"github.com/go-chi/chi/v5"
@@ -45,8 +46,8 @@ func Preview(w http.ResponseWriter, r *http.Request) {
 	if len(storedData.Data) < 5*1024*1024 {
 		w.Header().Set("Content-Type", storedData.MIME)
 		w.Header().Set("X-File-Name", storedData.FileName)
-		w.Header().Set("X-File-Size", string(rune(len(storedData.Data))))
-		w.Header().Set("X-Downloads-Left", string(rune(storedData.DownloadsLeft)))
+		w.Header().Set("X-File-Size", strconv.Itoa(len(storedData.Data)))
+		w.Header().Set("X-Downloads-Left", strconv.Itoa(storedData.DownloadsLeft))
 		w.Write(storedData.Data)
 		return
 	}
