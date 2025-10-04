@@ -25,11 +25,9 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	// API routes
 	r.Post("/upload", handlers.Upload)
 	r.Get("/file/{id}", handlers.DownloadFile)
-
-	// Serve static files
+	r.Get("/file/{id}/preview", handlers.Preview)
 	fs := http.FileServer(http.Dir("."))
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")

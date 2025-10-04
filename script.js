@@ -794,7 +794,7 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// Service worker disabled - uncomment if you add sw.js
+// Service worker disabled - for sw.js
 // if ('serviceWorker' in navigator) {
 //     window.addEventListener('load', function() {
 //         navigator.serviceWorker.register('/sw.js')
@@ -806,3 +806,222 @@ document.addEventListener('keydown', function(event) {
 //             });
 //     });
 // }
+document.getElementById('previewBtn')?.addEventListener('click', async function(){
+    const fileId = document.getElementById('fileId').value.trim();
+    const password = document.getElementById('downloadPassword').value;
+
+    if (!fileId){
+        showToast('Please enter a file ID', 'error');
+        return;
+    }
+
+    await previewFile(fileId, password);
+
+});
+
+document.getElementById('closePreviewModal')?.addEventListener('click', function(){
+    closePreviewModal();
+});
+
+document.getElementById('downloadFromPreview')?.addEventListener('click',function(){
+    const fileId = document.getElementById('fileId').value.trim();
+    const password=document.getElementById('downloadPassword').value;
+    closePreviewModal();
+
+    document.getElementById('downlaodForm').dispatchEvent(new Event('submit'));
+});
+
+document.addEventListener('keydown',function(event){
+    if (event.key === 'Escape'){
+        const modal=document.getElementById('previewModal');
+        if (modal && modal.style.display!=='none'){
+            closePreviewModal();
+        }
+    }
+});
+
+async function previewFile(fileId, password=' '){
+    const modal=document.getElementById('previewModal');
+    const modalBody=document.getElementById('previewModalBody');
+    const fileName=document.getElementById('previewFileName');
+    const fileDetails=document.getElementById('previewFileDetails');
+    const downloadsLeft=document.getElementById('previewDownloadsLeft');
+    const fileIcon=document.getElementById('previewFileIcon');
+
+    modal.style.display='flex';
+    modalBody.innerHTML = `
+        <div class="preview-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading preview...</p>
+        </div>
+    `;
+    
+    try {
+        // Build URL with password if provided
+        let url = `${API_BASE_URL}/preview/${fileId}`;
+        if (password) {
+            url += `?password=${encodeURIComponent(password)}`;
+        }
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            if (response.status === 403) {
+                throw new Error('Wrong or missing password');
+            } else if (response.status === 404) {
+                throw new Error('File not found or expired');
+            } else if (response.status === 410) {
+                throw new Error('No downloads remaining');
+            } else {
+                throw new Error('Failed to load preview');
+            }
+        }
+        
+        // Get file info from headers
+        const contentType = response.headers.get('Content-Type');
+        const displayFileName = response.headers.get('X-File-Name') || 'Unknown';
+        const fileSize = response.headers.get('X-File-Size');
+        const dlLeft = response.headers.get('X-Downloads-Left') || '?';
+        
+        // Update modal header
+        fileName.textContent = displayFileName;
+        fileDetails.textContent = fileSize ? `${formatFileSize(parseInt(fileSize))} • ${contentType}` : contentType;
+        downloadsLeft.textContent = dlLeft;
+        fileIcon.className = getFileIcon(displayFileName, contentType);
+        
+        // Get file data as blob
+        const blob = await response.blob();
+        
+        // Generate preview based on file type
+        generatePreview(blob, contentType, displayFileName, modalBody);
+        
+    } catch (error) {
+        console.error('Preview error:', error);
+        modalBody.innerHTML = `
+            <div class="preview-unsupported">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Preview Failed</h3>
+                <p>${error.message}</p>
+                <p>You can still download the file.</p>
+            </div>
+        `;
+        showToast(error.message, 'error');
+    }
+}
+
+// Generate preview based on file type
+function generatePreview(blob, contentType, fileName, container) {
+    const blobUrl = URL.createObjectURL(blob);
+    
+    // Images
+    if (contentType.startsWith('image/')) {
+        container.innerHTML = `
+            <img src="${blobUrl}" alt="${fileName}" class="preview-image" />
+        `;
+    }
+    // Videos
+    else if (contentType.startsWith('video/')) {
+        container.innerHTML = `
+            <video controls class="preview-video">
+                <source src="${blobUrl}" type="${contentType}">
+                Your browser doesn't support video playback.
+            </video>
+        `;
+    }
+    // Audio
+    else if (contentType.startsWith('audio/')) {
+        container.innerHTML = `
+            <div style="text-align: center;">
+                <i class="fas fa-music" style="font-size: 4rem; color: var(--accent); margin-bottom: 20px;"></i>
+                <audio controls class="preview-audio">
+                    <source src="${blobUrl}" type="${contentType}">
+                    Your browser doesn't support audio playback.
+                </audio>
+            </div>
+        `;
+    }
+    // PDFs
+    else if (contentType === 'application/pdf' || fileName.endsWith('.pdf')) {
+        container.innerHTML = `
+            <iframe src="${blobUrl}" class="preview-pdf"></iframe>
+        `;
+    }
+    // Text files
+    else if (contentType.startsWith('text/') || isTextFile(fileName)) {
+        blob.text().then(text => {
+            const isCode = isCodeFile(fileName);
+            container.innerHTML = `
+                <pre class="${isCode ? 'preview-code' : 'preview-text'}">${escapeHtml(text)}</pre>
+            `;
+        });
+    }
+    // JSON
+    else if (contentType === 'application/json' || fileName.endsWith('.json')) {
+        blob.text().then(text => {
+            try {
+                const json = JSON.parse(text);
+                const formatted = JSON.stringify(json, null, 2);
+                container.innerHTML = `
+                    <pre class="preview-code">${escapeHtml(formatted)}</pre>
+                `;
+            } catch(e) {
+                container.innerHTML = `
+                    <pre class="preview-text">${escapeHtml(text)}</pre>
+                `;
+            }
+        });
+    }
+    // Unsupported
+    else {
+        container.innerHTML = `
+            <div class="preview-unsupported">
+                <i class="fas fa-file"></i>
+                <h3>Preview Not Available</h3>
+                <p>This file type cannot be previewed in the browser.</p>
+                <p><strong>${fileName}</strong></p>
+                <p>Click "Download File" to get the file.</p>
+            </div>
+        `;
+    }
+}
+
+// Helper functions
+function closePreviewModal() {
+    const modal = document.getElementById('previewModal');
+    modal.style.display = 'none';
+    
+    // Clean up blob URLs to free memory
+    const modalBody = document.getElementById('previewModalBody');
+    const media = modalBody.querySelectorAll('img, video, audio, iframe');
+    media.forEach(el => {
+        if (el.src && el.src.startsWith('blob:')) {
+            URL.revokeObjectURL(el.src);
+        }
+    });
+}
+
+function isTextFile(fileName) {
+    const textExtensions = ['.txt', '.md', '.log', '.csv', '.xml', '.yaml', '.yml', '.env', '.gitignore', '.config'];
+    return textExtensions.some(ext => fileName.endsWith(ext));
+}
+
+function isCodeFile(fileName) {
+    const codeExtensions = ['.js', '.ts', '.jsx', '.tsx', '.py', '.go', '.java', '.cpp', '.c', '.h', '.cs', '.php', '.rb', '.rs', '.swift', '.kt', '.html', '.css', '.scss', '.sass', '.sql', '.sh', '.bash', '.ps1'];
+    return codeExtensions.some(ext => fileName.endsWith(ext));
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+console.log('Preview functionality loaded');
