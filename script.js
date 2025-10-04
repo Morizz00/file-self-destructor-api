@@ -2,6 +2,7 @@
 const API_BASE_URL = window.location.origin;
 let currentFileId = null;
 let currentPassword = '';
+let countdownInterval = null;
 
 // DOM elements
 const uploadSection = document.getElementById('uploadSection');
@@ -67,6 +68,7 @@ function initializeEventListeners() {
     // Navigation buttons
     uploadAnotherBtn.addEventListener('click', showUploadSection);
     testDownloadBtn.addEventListener('click', testDownload);
+    document.getElementById('previewAfterUploadBtn')?.addEventListener('click', previewUploadedFile);
     uploadModeBtn.addEventListener('click', showUploadSection);
     downloadModeBtn.addEventListener('click', showDownloadSection);
     
@@ -351,6 +353,11 @@ function showSuccessSection(file, downloads, expiry, password) {
         colorLight: '#ffffff'
     });
     // Calculate expiry time and start countdown
+    // Clear any existing countdown interval first
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    
 const expiryMinutes = parseInt(expiry);
 const expiryTime = new Date(Date.now() + expiryMinutes * 60 * 1000);
 
@@ -361,6 +368,7 @@ function updateCountdown() {
     if (remaining <= 0) {
         document.getElementById('expiryCountdown').textContent = 'Expired';
         document.getElementById('expiryCountdown').style.color = '#ff4444';
+        clearInterval(countdownInterval);
         return;
     }
     
@@ -377,7 +385,7 @@ function updateCountdown() {
 
 // Update countdown every second
 updateCountdown();
-const countdownInterval = setInterval(updateCountdown, 1000);
+countdownInterval = setInterval(updateCountdown, 1000);
 
 // Set upload time
 const now = new Date();
@@ -1022,6 +1030,17 @@ function formatFileSize(bytes) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Preview uploaded file (from success screen)
+function previewUploadedFile() {
+    if (!currentFileId) {
+        showToast('No file ID available', 'error');
+        return;
+    }
+    
+    // Use the stored file ID and password
+    previewFile(currentFileId, currentPassword);
 }
 
 console.log('Preview functionality loaded');
