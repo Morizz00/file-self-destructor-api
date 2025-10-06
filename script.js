@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     showUploadSection();
     initializeDarkMode();
+    ThemeSystem.init();
 });
 
 // Event Listeners
@@ -74,7 +75,10 @@ function initializeEventListeners() {
     
     
     // Dark mode toggle
-    document.getElementById('darkModeToggle').addEventListener('change', toggleDarkMode);
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('change', toggleDarkMode);
+    }
     
     // Expiry preset buttons
     document.querySelectorAll('.preset-btn').forEach(btn => {
@@ -88,8 +92,49 @@ function initializeEventListeners() {
             this.classList.add('active');
         });
     });
-}
 
+    const themePickerBtn=document.getElementById('themePickerBtn');
+    const themeDropdown=document.getElementById('themeDropdown');
+
+    if (themePickerBtn && themeDropdown) {
+        themePickerBtn.addEventListener('click', function(e){
+            e.stopPropagation();
+            themeDropdown.classList.toggle('show');
+        });
+    }
+
+    if (themePickerBtn && themeDropdown) {
+        document.addEventListener('click',function(e){
+            if (!themePickerBtn.contains(e.target) && !themeDropdown.contains(e.target)){
+                themeDropdown.classList.remove('show');
+            }
+        });
+    }
+
+    document.querySelectorAll('.theme-preset').forEach(btn => {
+        btn.addEventListener('click',function(){
+            const theme=this.getAttribute('data-theme');
+            ThemeSystem.saveTheme(theme);  
+            document.querySelectorAll('.theme-preset').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            if (themeDropdown) {
+                themeDropdown.classList.remove('show');
+            }
+        });
+    });
+  
+    const applyCustomBtn = document.getElementById('applyCustomBtn');
+    if (applyCustomBtn) {
+        applyCustomBtn.addEventListener('click', function() {
+            ThemeSystem.applyCustomTheme();
+            ThemeSystem.saveTheme('custom');
+            if (themeDropdown) {
+                themeDropdown.classList.remove('show');
+            }
+        });
+    }
+} 
 // File handling
 function handleFileSelect(event) {
     const file = event.target.files[0];
@@ -319,6 +364,124 @@ function showUploadSection() {
     resetUploadForm();
 }
 
+const ThemeSystem={
+    themes:{
+        default:{
+            accent:'#3b82f6',
+            accentHover:'#2563eb',
+            gradientPrimary:"rgba(59, 130, 246, 0.15)",
+            gradientSecondary:"rgba(139, 92, 246, 0.15)",
+        },
+        ocean:{
+            accent:'#00b4d8',
+            accentHover:'#0083b0',
+            gradientPrimary:"rgba(0, 180, 216, 0.15)",  
+            gradientSecondary:"rgba(0, 131, 176, 0.15)",
+        },
+        sunset:{
+            accent:'#ff6b6b',
+            accentHover:'#ff4444',
+            gradientPrimary:"rgba(255, 107, 107, 0.15)",
+            gradientSecondary:"rgba(255, 59, 59, 0.15)",
+
+        },
+        forest:{
+            accent:'#22c55e',
+        accentHover:'#16a34a',
+        gradientPrimary:"rgba(34, 197, 94, 0.15)",
+        gradientSecondary:"rgba(38, 166, 154, 0.15)",
+        },
+        purple:{
+            accent:'#8b5cf6',
+            accentHover:'#7e57c2',
+            gradientPrimary:'rgba(139, 87, 198, 0.15)',
+            gradientSecondary:'rgba(126, 87, 194, 0.15)',
+        },
+        neon:{
+            accent:'#00ff00',
+            accentHover:'#00cc00',
+            gradientPrimary:'rgba(0, 255, 0, 0.15)',
+            gradientSecondary:'rgba(0, 204, 0, 0.15)',
+        }
+    },
+    applyTheme(theme){
+        let themeData;
+        
+        // Check if theme is a string (preset) or object (custom)
+        if (typeof theme === 'string') {
+            themeData = ThemeSystem.themes[theme];
+            if (!themeData) {
+                return;
+            }
+        } else if (typeof theme === 'object') {
+            themeData = theme;
+        } else {
+            return;
+        }
+    
+        document.documentElement.style.setProperty('--accent', themeData.accent);
+        document.documentElement.style.setProperty('--accent-hover', themeData.accentHover);
+        document.documentElement.style.setProperty('--gradient-primary', themeData.gradientPrimary);
+        document.documentElement.style.setProperty('--gradient-secondary', themeData.gradientSecondary);
+        
+        // Update active theme indicator
+        this.updateActiveTheme(theme);
+        },
+        applyCustomTheme(){
+            const primaryColor=document.getElementById('customPrimary').value;
+            const secondaryColor=document.getElementById('customSecondary').value;
+            
+            // Convert hex to RGB
+            const primaryRgb = this.hexToRgb(primaryColor);
+            const secondaryRgb = this.hexToRgb(secondaryColor);
+            
+            const themeData={
+                accent:primaryColor,
+                accentHover:secondaryColor,
+                gradientPrimary:`rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.15)`,
+                gradientSecondary:`rgba(${secondaryRgb.r}, ${secondaryRgb.g}, ${secondaryRgb.b}, 0.15)`,
+            }
+            this.applyTheme(themeData);
+        },
+        hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        },
+        updateActiveTheme(theme) {
+            // Remove active class from all theme presets
+            document.querySelectorAll('.theme-preset').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to current theme (if it's a preset)
+            if (typeof theme === 'string' && theme !== 'custom') {
+                const activeBtn = document.querySelector(`[data-theme="${theme}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+            }
+        },
+        init(){
+            const savedTheme=localStorage.getItem('theme') || 'default';
+            this.applyTheme(savedTheme);
+            const themePickerBtn=document.getElementById('themePickerBtn');
+            const themeDropdown=document.getElementById('themeDropdown');
+        },
+        saveTheme(theme){
+            localStorage.setItem('theme', theme);
+            this.applyTheme(theme);
+        },
+        loadTheme(){
+            const savedTheme=localStorage.getItem('theme') || 'default';
+            this.applyTheme(savedTheme);
+        }
+};
+
+
 function showSuccessSection(file, downloads, expiry, password) {
     uploadSection.style.display = 'none';
     successSection.style.display = 'block';
@@ -416,7 +579,9 @@ function resetUploadForm() {
 // Hide preview function
 function hidePreview() {
     const previewContainer = document.getElementById('filePreviewContainer');
-    previewContainer.style.display = 'none';
+    if (previewContainer) {
+        previewContainer.style.display = 'none';
+    }
 }
 
 function resetDownloadForm() {
@@ -568,6 +733,10 @@ function showProgress() {
     const progressFill = document.getElementById('progressFill');
     const progressText = document.getElementById('progressText');
 
+    if (!progressContainer || !progressFill || !progressText) {
+        return; // Exit if elements don't exist
+    }
+
     progressContainer.style.display = 'block';
     let progress = 0;
     const interval = setInterval(() => {
@@ -604,6 +773,10 @@ function validateFile(file) {
 function previewFile(file) {
     const previewContainer = document.getElementById('filePreviewContainer');
     const previewContent = document.getElementById('previewContent');
+
+    if (!previewContainer || !previewContent) {
+        return; // Exit if elements don't exist
+    }
 
     previewContainer.style.display = 'block';
     
@@ -833,7 +1006,7 @@ document.getElementById('downloadFromPreview')?.addEventListener('click',functio
     const password=document.getElementById('downloadPassword').value;
     closePreviewModal();
 
-    document.getElementById('downlaodForm').dispatchEvent(new Event('submit'));
+    document.getElementById('downloadForm').dispatchEvent(new Event('submit'));
 });
 
 document.addEventListener('keydown',function(event){
@@ -853,7 +1026,9 @@ async function previewFile(fileId, password=' '){
     const downloadsLeft=document.getElementById('previewDownloadsLeft');
     const fileIcon=document.getElementById('previewFileIcon');
 
-    modal.style.display='flex';
+    if (modal) {
+        modal.style.display='flex';
+    }
     modalBody.innerHTML = `
         <div class="preview-loading">
             <i class="fas fa-spinner fa-spin"></i>
@@ -993,7 +1168,9 @@ function generatePreview(blob, contentType, fileName, container) {
 // Helper functions
 function closePreviewModal() {
     const modal = document.getElementById('previewModal');
-    modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+    }
     
     // Clean up blob URLs to free memory
     const modalBody = document.getElementById('previewModalBody');

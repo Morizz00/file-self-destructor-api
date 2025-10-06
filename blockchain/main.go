@@ -11,10 +11,10 @@ import (
 )
 
 func main() {
-	// Load configuration
+	// configurations
 	cfg := config.Load()
 
-	// Setup router
+	// routers
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -26,7 +26,7 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	// Blockchain API routes
+	// blockchain API routes
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/proof/upload", handlers.RegisterUpload)
 		r.Post("/proof/download", handlers.RegisterDownload)

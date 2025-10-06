@@ -6,7 +6,7 @@
 }
 
 :root {
-    /* Dark Theme (Default) */
+    /* Default Theme Variables */
     --bg-primary: #0a0a0a;
     --bg-secondary: #111111;
     --bg-tertiary: #1a1a1a;
@@ -14,10 +14,18 @@
     --text-secondary: #a0a0a0;
     --accent: #3b82f6;
     --accent-hover: #2563eb;
+    --accent-light: rgba(59, 130, 246, 0.1);
     --border: rgba(255, 255, 255, 0.1);
     --success: #10b981;
     --error: #ef4444;
     --warning: #f59e0b;
+    
+    /* Gradient colors for backgrounds */
+    --gradient-primary: rgba(59, 130, 246, 0.15);
+    --gradient-secondary: rgba(139, 92, 246, 0.15);
+    
+    /* Theme transition */
+    --theme-transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
@@ -27,8 +35,7 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
-    transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-                color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: var(--theme-transition);
 }
 
 /* Animated background */
@@ -40,17 +47,11 @@ body::before {
     width: 100%;
     height: 100%;
     background: 
-        radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+        radial-gradient(circle at 20% 50%, var(--gradient-primary) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, var(--gradient-secondary) 0%, transparent 50%);
     pointer-events: none;
     z-index: -1;
-    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body:not(.dark-mode)::before {
-    background: 
-        radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+    transition: var(--theme-transition);
 }
 
 .container {
@@ -109,18 +110,25 @@ body:not(.dark-mode)::before {
     font-weight: 400;
 }
 
+/* Theme Controls */
+.theme-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    align-items: center;
+}
+
 /* Theme Toggle */
 .theme-toggle {
     display: inline-flex;
     align-items: center;
     gap: 1rem;
-    margin-top: 1.5rem;
     padding: 0.75rem 1.5rem;
     background: var(--bg-secondary);
     border-radius: 2rem;
     border: 1px solid var(--border);
-    transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: var(--theme-transition);
 }
 
 .theme-label {
@@ -177,6 +185,191 @@ body:not(.dark-mode)::before {
 .toggle-switch input:checked + .toggle-slider:before {
     transform: translateX(24px);
     background: white;
+}
+
+/* Color Scheme Picker */
+.color-scheme-picker {
+    position: relative;
+}
+
+.theme-picker-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 2rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--theme-transition);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.theme-picker-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent);
+}
+
+.theme-picker-btn i {
+    color: var(--accent);
+}
+
+/* Theme Dropdown */
+.theme-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 0.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    min-width: 300px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%) translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+}
+
+.theme-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.theme-dropdown h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Theme Grid */
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.theme-preset {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: var(--theme-transition);
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.theme-preset:hover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+}
+
+.theme-preset.active {
+    border-color: var(--accent);
+    background: var(--accent-light);
+}
+
+/* Theme Previews */
+.theme-preview {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    border: 2px solid var(--border);
+    transition: var(--theme-transition);
+}
+
+.default-theme {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+}
+
+.ocean-theme {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+}
+
+.sunset-theme {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+}
+
+.forest-theme {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.purple-theme {
+    background: linear-gradient(135deg, #8b5cf6, #a855f7);
+}
+
+.neon-theme {
+    background: linear-gradient(135deg, #00ff88, #00d4ff);
+}
+
+/* Custom Theme Section */
+.custom-theme {
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+}
+
+.color-inputs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.color-input-group {
+    flex: 1;
+}
+
+.color-input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.color-input-group input[type="color"] {
+    width: 100%;
+    height: 2.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    background: var(--bg-tertiary);
+    cursor: pointer;
+    transition: var(--theme-transition);
+}
+
+.color-input-group input[type="color"]:hover {
+    border-color: var(--accent);
+}
+
+.apply-custom-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--theme-transition);
+}
+
+.apply-custom-btn:hover {
+    background: var(--accent-hover);
 }
 
 /* Cards */
