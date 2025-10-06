@@ -9,8 +9,12 @@ actix-web = "4.5"
 actix-cors = "0.7"
 tokio = { version = "1", features = ["full"] }
 
+# HTTP Client
+reqwest = { version = "0.11", features = ["json"] }
+
 # Blockchain
-ethers = "2.0"
+ethers = "1.0"
+web3 = "0.19"
 solana-client = { version = "1.17", optional = true }
 
 # IPFS
@@ -27,6 +31,7 @@ serde_json = "1.0"
 
 # Database/Cache
 redis = { version = "0.24", features = ["tokio-comp"] }
+sqlx = { version = "0.6", features = ["postgres", "runtime-tokio"] }
 
 # Error Handling
 thiserror = "1.0"
@@ -34,6 +39,7 @@ anyhow = "1.0"
 
 # Config
 dotenv = "0.15"
+config = "0.14"
 
 # Logging
 tracing = "0.1"
