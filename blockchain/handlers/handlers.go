@@ -32,10 +32,7 @@ func RegisterUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create blockchain service
 	blockchainService := services.NewBlockchainService()
-
-	// Register upload on blockchain
 	result, err := blockchainService.RegisterUpload(req.FileID, req.FileData, req.ExpiryMinutes, req.MaxDownloads)
 	if err != nil {
 		http.Error(w, "Failed to register upload: "+err.Error(), http.StatusInternalServerError)

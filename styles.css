@@ -962,7 +962,7 @@ body::before {
 
 /* Dark Mode Class (for toggle) */
 body.dark-mode {
-    /* Already dark by default */
+    /* Dark mode is the default theme */
 }
 
 /* Light Mode Override - Creamy theme */
@@ -1114,6 +1114,139 @@ body:not(.dark-mode) .logo h1 {
     padding: 30px;
     overflow: auto;
     background: var(--bg-primary);
+}
+
+/* Clipboard Toast Styles */
+.clipboard-permission-toast {
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    border-left: 4px solid var(--accent);
+}
+
+.clipboard-upload-toast {
+    background: linear-gradient(135deg, var(--success), #059669);
+    border-left: 4px solid var(--success);
+}
+
+.toast-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: var(--theme-transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.toast-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.enable-clipboard-btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.enable-clipboard-btn:hover {
+    background: white;
+}
+
+.upload-clipboard-btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--success);
+    font-weight: 600;
+}
+
+.upload-clipboard-btn:hover {
+    background: white;
+}
+
+.dismiss-toast-btn {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem;
+    min-width: auto;
+}
+
+.dismiss-toast-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Toast Content Layout */
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.toast-text {
+    flex: 1;
+}
+
+.toast-text strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.toast-text p {
+    margin: 0;
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+/* Toast Container */
+#toastContainer {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 400px;
+}
+
+/* Toast Animations */
+.toast {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Toast */
+@media (max-width: 768px) {
+    #toastContainer {
+        top: 1rem;
+        right: 1rem;
+        left: 1rem;
+        max-width: none;
+    }
+    
+    .toast-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .toast-btn {
+        justify-content: center;
+    }
 }
 
 .preview-loading {

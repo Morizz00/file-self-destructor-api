@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     showUploadSection();
     initializeDarkMode();
     ThemeSystem.init();
+    initializeClipboardMonitor();
 });
 
 // Event Listeners
@@ -1180,6 +1181,194 @@ function closePreviewModal() {
             URL.revokeObjectURL(el.src);
         }
     });
+}
+
+// Clipboard Monitor here
+let clipboardMonitorActive = false;
+let lastClipboardContent = '';
+
+function initializeClipboardMonitor() {
+    if (!navigator.clipboard) {
+        console.log('Clipboard API not supported');
+        return;
+    }
+    requestClipboardPermission();
+}
+
+async function requestClipboardPermission() {
+    try {
+        const permission = await navigator.permissions.query({ name: 'clipboard-read' });
+        
+        if (permission.state === 'granted') {
+            startClipboardMonitoring();
+        } else if (permission.state === 'prompt') {
+            showClipboardPermissionToast();
+        } else {
+            console.log('Clipboard permission denied');
+        }
+    } catch (error) {
+        console.log('Clipboard permission check failed:', error);
+    }
+}
+
+function showClipboardPermissionToast() {
+    const toast = document.createElement('div');
+    toast.className = 'toast clipboard-permission-toast';
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas fa-clipboard"></i>
+            <div class="toast-text">
+                <strong>Enable Clipboard Monitor?</strong>
+                <p>Upload files directly from your clipboard!</p>
+            </div>
+            <button class="toast-btn enable-clipboard-btn">
+                <i class="fas fa-check"></i>
+                Enable
+            </button>
+            <button class="toast-btn dismiss-toast-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    toast.querySelector('.enable-clipboard-btn').addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.readText();
+            startClipboardMonitoring();
+            showToast('Clipboard monitor enabled! 📋', 'success');
+        } catch (error) {
+            showToast('Failed to enable clipboard monitor', 'error');
+        }
+        toast.remove();
+    });
+    
+    toast.querySelector('.dismiss-toast-btn').addEventListener('click', () => {
+        toast.remove();
+    });
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 10000);
+}
+
+function startClipboardMonitoring() {
+    clipboardMonitorActive = true;
+    setInterval(async () => {
+        if (!clipboardMonitorActive) return;
+        
+        try {
+            const clipboardItems = await navigator.clipboard.read();
+            
+            for (const clipboardItem of clipboardItems) {
+                if (clipboardItem.types.includes('image/png') || 
+                    clipboardItem.types.includes('image/jpeg') ||
+                    clipboardItem.types.includes('image/gif')) {
+                    
+                    const imageBlob = await clipboardItem.getType('image/png') || 
+                                    await clipboardItem.getType('image/jpeg') ||
+                                    await clipboardItem.getType('image/gif');
+                    
+                    if (imageBlob) {
+                        showClipboardUploadToast(imageBlob, 'image');
+                    }
+                }
+                if (clipboardItem.types.includes('text/plain')) {
+                    const textBlob = await clipboardItem.getType('text/plain');
+                    const text = await textBlob.text();
+                    
+                    if (text && text !== lastClipboardContent && text.length > 10) {
+                        lastClipboardContent = text;
+                        showClipboardUploadToast(text, 'text');
+                    }
+                }
+            }
+        } catch (error) {
+        }
+    }, 2000);
+}
+
+function showClipboardUploadToast(content, type) {
+    const toast = document.createElement('div');
+    toast.className = 'toast clipboard-upload-toast';
+    
+    const icon = type === 'image' ? 'fas fa-image' : 'fas fa-file-text';
+    const title = type === 'image' ? 'Image detected!' : 'Text detected!';
+    const description = type === 'image' ? 'Upload this image to FileOrcha?' : 'Upload this text as a file?';
+    
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="${icon}"></i>
+            <div class="toast-text">
+                <strong>${title}</strong>
+                <p>${description}</p>
+            </div>
+            <button class="toast-btn upload-clipboard-btn" data-type="${type}">
+                <i class="fas fa-upload"></i>
+                Upload
+            </button>
+            <button class="toast-btn dismiss-toast-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    toast.querySelector('.upload-clipboard-btn').addEventListener('click', () => {
+        uploadFromClipboard(content, type);
+        toast.remove();
+    });
+    
+    toast.querySelector('.dismiss-toast-btn').addEventListener('click', () => {
+        toast.remove();
+    });
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 15000);
+}
+
+async function uploadFromClipboard(content, type) {
+    try {
+        showToast('Uploading from clipboard...', 'info');
+        
+        if (type === 'image') {
+            const file = new File([content], `clipboard-image-${Date.now()}.png`, {
+                type: content.type
+            });
+            
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+            handleFileSelect({ target: { files: [file] } });
+            showUploadSection();
+            
+        } else if (type === 'text') {
+            const textBlob = new Blob([content], { type: 'text/plain' });
+            const file = new File([textBlob], `clipboard-text-${Date.now()}.txt`, {
+                type: 'text/plain'
+            });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+
+            handleFileSelect({ target: { files: [file] } });
+            showUploadSection();
+        }
+        
+        showToast('File ready for upload! Click "Upload & Generate Link"', 'success');
+        
+    } catch (error) {
+        console.error('Clipboard upload error:', error);
+        showToast('Failed to upload from clipboard', 'error');
+    }
+}
+function toggleClipboardMonitor() {
+    clipboardMonitorActive = !clipboardMonitorActive;
+    const status = clipboardMonitorActive ? 'enabled' : 'disabled';
+    showToast(`Clipboard monitor ${status}`, 'info');
 }
 
 function isTextFile(fileName) {
