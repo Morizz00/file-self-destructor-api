@@ -3,9 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"github.com/Morizz00/self-destruct-share-api/blockchain/models"
 	"github.com/Morizz00/self-destruct-share-api/blockchain/services"
 	"github.com/go-chi/chi/v5"
 )
@@ -63,7 +61,7 @@ func RegisterDownload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	blockchainService := services.NewBlockchainService()
-	
+
 	result, err := blockchainService.RegisterDownload(req.FileID, req.Downloader)
 	if err != nil {
 		http.Error(w, "Failed to register download: "+err.Error(), http.StatusInternalServerError)
@@ -79,7 +77,7 @@ func VerifyProof(w http.ResponseWriter, r *http.Request) {
 	providedHash := r.URL.Query().Get("hash")
 
 	blockchainService := services.NewBlockchainService()
-	
+
 	isValid, err := blockchainService.VerifyFileHash(fileID, providedHash)
 	if err != nil {
 		http.Error(w, "Failed to verify proof: "+err.Error(), http.StatusInternalServerError)
@@ -87,7 +85,7 @@ func VerifyProof(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"valid": isValid,
+		"valid":   isValid,
 		"file_id": fileID,
 	}
 
@@ -99,7 +97,7 @@ func GetProof(w http.ResponseWriter, r *http.Request) {
 	fileID := chi.URLParam(r, "file_id")
 
 	blockchainService := services.NewBlockchainService()
-	
+
 	proof, err := blockchainService.GetTransfer(fileID)
 	if err != nil {
 		http.Error(w, "Failed to get proof: "+err.Error(), http.StatusInternalServerError)

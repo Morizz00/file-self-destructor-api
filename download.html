@@ -3,14 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your secure file is ready for download. This link will self-destruct.">
     <meta property="og:title" content="Download Your File - FileOrcha">
     <meta property="og:description" content="Your secure file is ready for download. This link will self-destruct.">
     <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary">
+    <meta property="og:image" content="https://via.placeholder.com/1200x630/3b82f6/ffffff?text=FileOrcha">
+    <meta property="og:url" content="">
+    <meta property="og:site_name" content="FileOrcha">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Download Your File - FileOrcha">
+    <meta name="twitter:description" content="Your secure file is ready for download. This link will self-destruct.">
+    <meta name="twitter:image" content="https://via.placeholder.com/1200x630/3b82f6/ffffff?text=FileOrcha">
     <title>Download File - FileOrcha</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* File Info Card Styling */
+        .file-info-card {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-info-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .file-icon-large {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .file-details h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        .file-details p {
+            margin: 4px 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .file-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-item i {
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        .stat-item span {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stat-item strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .file-info-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 16px;
+            }
+
+            .file-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .file-details h3 {
+                font-size: 1.3rem;
+            }
+        }
+
+        /* Dark mode adjustments */
+        .dark-mode .file-info-card {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dark-mode .stat-item {
+            background: #0a0a0a;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -48,14 +174,34 @@
                         </button>
                     </form>
 
+                    <!-- File Info Card -->
+                    <div class="file-info-card" id="fileInfoCard" style="display: none;">
+                        <div class="file-info-header">
+                            <div class="file-icon-large">
+                                <i class="fas fa-file" id="fileIcon"></i>
+                            </div>
+                            <div class="file-details">
+                                <h3 id="fileName">Loading...</h3>
+                                <p id="fileSize">-</p>
+                                <p id="fileType">-</p>
+                            </div>
+                        </div>
+                        <div class="file-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-download"></i>
+                                <span>Downloads left: <strong id="downloadsLeft">-</strong></span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-clock"></i>
+                                <span>Expires: <strong id="expiresAt">-</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="download-info">
                         <div class="info-item">
                             <i class="fas fa-info-circle"></i>
                             <span>File ID: <strong id="fileIdDisplay"></strong></span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-clock"></i>
-                            <span>Expires in: <strong>5 minutes</strong></span>
                         </div>
                         <div class="info-item">
                             <i class="fas fa-exclamation-triangle"></i>
@@ -94,6 +240,12 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const fileIdDisplay = document.getElementById('fileIdDisplay');
         const toastContainer = document.getElementById('toastContainer');
+        const urlParams = new URLSearchParams(window.location.search);
+        const fieldId = urlParams.get('id');
+
+        if (fieldId) {
+            fetchMetaData(fieldId);
+        }
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
@@ -105,6 +257,86 @@
         function initializeEventListeners() {
             downloadForm.addEventListener('submit', handleDownload);
         }
+
+        async function fetchMetaData(fieldId){
+            try{
+                const response = await fetch(`${API_BASE_URL}/meta/${fieldId}`);
+                const meta=await response.json();
+
+                updatePageMeta(meta);
+
+            }catch(error){
+                console.error('Err fetching meta data',error);
+            }
+        }
+
+
+        function updatePageMeta(metaData){
+            // Update page title and meta tags
+            document.title = metaData.title;
+
+            updateMetaTags('description', metaData.description);
+            updateMetaTags('og:title', metaData.title);
+            updateMetaTags('og:description', metaData.description);
+            updateMetaTags('og:type', metaData.type);
+            updateMetaTags('og:url', metaData.url);
+            updateMetaTags('og:site_name', metaData.site_name);
+            updateMetaTags('og:image', metaData.image);
+
+            // Update file info card
+            updateFileInfoCard(metaData);
+        }
+
+        function updateFileInfoCard(metaData) {
+            const fileInfoCard = document.getElementById('fileInfoCard');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const fileType = document.getElementById('fileType');
+            const fileIcon = document.getElementById('fileIcon');
+            const downloadsLeft = document.getElementById('downloadsLeft');
+            const expiresAt = document.getElementById('expiresAt');
+
+            fileInfoCard.style.display = 'block';
+
+            // Update content
+            fileName.textContent = metaData.title.replace(' - FileOrcha', '');
+            fileSize.textContent = metaData.file_size;
+            fileType.textContent = metaData.file_type;
+            downloadsLeft.textContent = metaData.downloads_left;
+            expiresAt.textContent = new Date(metaData.expires_at).toLocaleString();
+
+            // Update file icon based on type
+            const iconClass = getFileIconClass(metaData.file_type);
+            fileIcon.className = `fas ${iconClass}`;
+        }
+
+        function getFileIconClass(fileType) {
+            const type = fileType.toLowerCase();
+            if (type.includes('image')) return 'fa-image';
+            if (type.includes('video')) return 'fa-video';
+            if (type.includes('audio')) return 'fa-music';
+            if (type.includes('pdf')) return 'fa-file-pdf';
+            if (type.includes('word')) return 'fa-file-word';
+            if (type.includes('excel')) return 'fa-file-excel';
+            if (type.includes('powerpoint')) return 'fa-file-powerpoint';
+            if (type.includes('text')) return 'fa-file-alt';
+            if (type.includes('archive')) return 'fa-file-archive';
+            if (type.includes('javascript') || type.includes('code')) return 'fa-file-code';
+            return 'fa-file';
+        }
+
+        function updateMetaTags(name, content) {
+            let metaTag = document.querySelector(`meta[property="${name}"]`);
+            
+            if (!metaTag) {
+                metaTag = document.createElement('meta');
+                metaTag.setAttribute('property', name);
+                document.head.appendChild(metaTag);
+            }
+            
+            metaTag.setAttribute('content', content);
+        }
+        
 
         // Handle URL parameters
         function handleUrlParameters() {

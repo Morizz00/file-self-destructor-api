@@ -28,6 +28,7 @@ func main() {
 	r.Post("/upload", handlers.Upload)
 	r.Get("/file/{id}", handlers.DownloadFile)
 	r.Get("/preview/{id}", handlers.Preview)
+	r.Get("/meta/{id}", handlers.GetMeta)
 	fs := http.FileServer(http.Dir("."))
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
