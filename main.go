@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -59,25 +60,39 @@ func main() {
 	})
 
 	// Static file serving
-	fs := http.FileServer(http.Dir("."))
+	workDir, _ := os.Getwd()
+	log.Printf("Working directory: %s", workDir)
+	
+	// Check if static files exist
+	staticFiles := []string{"index.html", "download.html", "styles.css", "script.js"}
+	for _, file := range staticFiles {
+		path := filepath.Join(workDir, file)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			log.Printf("WARNING: Static file not found: %s", path)
+		}
+	}
+	
+	fs := http.FileServer(http.Dir(workDir))
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
+		http.ServeFile(w, r, filepath.Join(workDir, "index.html"))
 	})
 	r.Get("/download.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "download.html")
+		http.ServeFile(w, r, filepath.Join(workDir, "download.html"))
 	})
 	r.Get("/styles.css", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "styles.css")
+		w.Header().Set("Content-Type", "text/css")
+		http.ServeFile(w, r, filepath.Join(workDir, "styles.css"))
 	})
 	r.Get("/script.js", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "script.js")
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeFile(w, r, filepath.Join(workDir, "script.js"))
 	})
 	r.Handle("/static/*", http.StripPrefix("/static/", fs))
 
-	// Get port from environment variable or use 8080 as default
+	// Get port from environment variable or use 8000 as default (Koyeb default)
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "8000"
 	}
 
 	// Create HTTP server with timeouts

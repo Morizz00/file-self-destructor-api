@@ -28,6 +28,14 @@ func init() {
 	}
 
 	rdb = redis.NewClient(opt)
+	
+	// Test connection
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		panic("Failed to connect to Redis: " + err.Error() + " (URL: " + redisURL + ")")
+	}
 }
 
 // cleanRedisURL removes common redis-cli command prefixes
