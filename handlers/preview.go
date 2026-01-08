@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/Morizz00/self-destruct-share-api/storage"
+	"github.com/Morizz00/self-destruct-share-api/utils"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -26,9 +27,11 @@ func Preview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	password := r.URL.Query().Get("password")
-	if storedData.Password != "" && storedData.Password != password {
-		http.Error(w, "Wrong or missing password", http.StatusForbidden)
-		return
+	if storedData.Password != "" {
+		if !utils.CheckPassword(password, storedData.Password) {
+			http.Error(w, "Wrong or missing password", http.StatusForbidden)
+			return
+		}
 	}
 	if storedData.DownloadsLeft <= 0 {
 		http.Error(w, "No downloads remaining", http.StatusGone)

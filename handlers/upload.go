@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -15,9 +16,19 @@ import (
 func Upload(w http.ResponseWriter, r *http.Request) {
 	file, fileHeader, err := r.FormFile("file")
 	if err != nil {
+		log.Printf("Upload error: failed to get file from form: %v", err)
 		http.Error(w, "Upload fail", http.StatusBadRequest)
 		return
 	}
+	defer file.Close()
+
+	// Validate file size
+	if err := utils.ValidateFileSize(fileHeader.Size); err != nil {
+		log.Printf("Upload error: %v (size: %d)", err, fileHeader.Size)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	password := r.FormValue("password")
 	slug := r.FormValue("slug")
 	if slug != "" {
@@ -29,32 +40,65 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 
 		_, err := storage.Get(slug)
 		if err == nil {
-			http.Error(w, "this custom link is already taker,try another one", http.StatusBadRequest)
+			http.Error(w, "this custom link is already taken, try another one", http.StatusBadRequest)
 			return
 		}
 	}
+
 	downloads := 1
 	if parsed, err := strconv.Atoi(r.FormValue("downloads")); err == nil && parsed > 0 {
 		downloads = parsed
 	}
-
-	expiry := 5 * time.Minute
-	if parsed, err := strconv.Atoi(r.FormValue("expiry")); err == nil && parsed > 0 {
-		expiry = time.Duration(parsed) * time.Minute
+	if err := utils.ValidateDownloads(downloads); err != nil {
+		log.Printf("Upload error: invalid downloads: %d", downloads)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	defer file.Close()
+	expiryMinutes := 5
+	if parsed, err := strconv.Atoi(r.FormValue("expiry")); err == nil && parsed > 0 {
+		expiryMinutes = parsed
+	}
+	if err := utils.ValidateExpiry(expiryMinutes); err != nil {
+		log.Printf("Upload error: invalid expiry: %d minutes", expiryMinutes)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	expiry := time.Duration(expiryMinutes) * time.Minute
+
 	fileData, err := io.ReadAll(file)
 	if err != nil {
+		log.Printf("Upload error: failed to read file: %v", err)
 		http.Error(w, "Failed to read file", http.StatusInternalServerError)
 		return
 	}
 
+	// Double-check size after reading (in case Content-Length was wrong)
+	if err := utils.ValidateFileSize(int64(len(fileData))); err != nil {
+		log.Printf("Upload error: file size validation failed after read: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Hash password if provided
+	hashedPassword := ""
+	if password != "" {
+		hashedPassword, err = utils.HashPassword(password)
+		if err != nil {
+			log.Printf("Upload error: failed to hash password: %v", err)
+			http.Error(w, "Failed to process password", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Sanitize filename
+	sanitizedFilename := utils.SanitizeFilename(fileHeader.Filename)
+
 	storeIt := storage.StoredFile{
-		FileName:      fileHeader.Filename,
+		FileName:      sanitizedFilename,
 		MIME:          fileHeader.Header.Get("Content-Type"),
 		Data:          fileData,
-		Password:      password,
+		Password:      hashedPassword,
 		DownloadsLeft: downloads,
 		Expiry:        expiry,
 	}
@@ -67,8 +111,11 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 	err = storage.StoreFile(id, storeIt, expiry)
 
 	if err != nil {
+		log.Printf("Upload error: storage failed: %v", err)
 		http.Error(w, "storage error", http.StatusInternalServerError)
 		return
 	}
+	log.Printf("File uploaded successfully: id=%s, filename=%s, size=%d, downloads=%d, expiry=%v", 
+		id, sanitizedFilename, len(fileData), downloads, expiry)
 	fmt.Fprintf(w, "File uploaded--Download:/file/%s\n", id)
 }

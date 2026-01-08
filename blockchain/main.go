@@ -1,3 +1,8 @@
+// +build ignore
+
+// BLOCKCHAIN CODE COMMENTED OUT - UNUSED
+// This file is excluded from builds using the build tag above
+
 package main
 
 import (

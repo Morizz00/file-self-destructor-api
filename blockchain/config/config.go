@@ -1,3 +1,9 @@
+//go:build ignore
+// +build ignore
+
+// BLOCKCHAIN CODE COMMENTED OUT - UNUSED
+// This file is excluded from builds using the build tag above
+
 package config
 
 import (
@@ -7,11 +13,11 @@ import (
 
 type Config struct {
 	BindAddress     string
-	EthRPCURL      string
-	PrivateKey     string
+	EthRPCURL       string
+	PrivateKey      string
 	ContractAddress string
-	ChainID        int64
-	IPFSURL        string
+	ChainID         int64
+	IPFSURL         string
 }
 
 func Load() *Config {
