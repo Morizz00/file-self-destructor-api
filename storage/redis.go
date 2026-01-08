@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -18,12 +19,28 @@ func init() {
 		redisURL = "redis://localhost:6379"
 	}
 
+	// Clean up REDIS_URL if it contains redis-cli command prefix
+	redisURL = cleanRedisURL(redisURL)
+
 	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
-		panic("Failed to parse REDIS_URL: " + err.Error())
+		panic("Failed to parse REDIS_URL: " + err.Error() + " (got: " + redisURL + ")")
 	}
 
 	rdb = redis.NewClient(opt)
+}
+
+// cleanRedisURL removes common redis-cli command prefixes
+func cleanRedisURL(url string) string {
+	// Remove "redis-cli --tls -u " prefix if present
+	if strings.HasPrefix(url, "redis-cli") {
+		// Extract URL after "-u " or "--tls -u "
+		parts := strings.Split(url, "-u ")
+		if len(parts) > 1 {
+			url = strings.TrimSpace(parts[len(parts)-1])
+		}
+	}
+	return strings.TrimSpace(url)
 }
 
 func StoreFile(key string, file StoredFile, expiry time.Duration) error {
