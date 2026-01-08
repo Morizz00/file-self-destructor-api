@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+main.exe
+main
+*.exe
+
+# Documentation
+*.md
+!README.md
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Blockchain (commented out)
+blockchain/
+blockchain-serv/
+
+# Deployment files
+DEPLOYMENT_OPTIONS.md
+PRODUCTION_IMPROVEMENTS.md
+BLOCKCHAIN_IMPLEMENTATION.md
+DEPLOYMENT.md
+RENDER_DEPLOYMENT.md
+QUICK_SHIP_PLAN.md
+UPGRADE_PLAN.md
+FUTURE_FEATURES.md
+
+# Test files
+*_test.go
+
+# Logs
+*.log
+
